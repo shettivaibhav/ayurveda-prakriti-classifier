@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+*_env/
+
+# Streamlit secrets (never commit real credentials)
+.streamlit/secrets.toml
+mini/.streamlit/secrets.toml
+
+# OS / editor
+.DS_Store
+*.swp
+
+# Logs and archives
+*.log
+*.zip
+
+# Data — human-subject images and spreadsheets are NOT distributed with this repo
+*.xlsx
+Wrist_Dataset/
+palm_dataset_full/
+WristClassifiedData/
+SubmissionFiles/
+**/metadata.json
+**/*_manifest.csv
+manifest.csv
+dataset_manifest.csv
+
+# Cached feature embeddings (regenerate from source data)
+*.npz
+.cache/
