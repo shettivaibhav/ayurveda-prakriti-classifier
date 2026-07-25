@@ -1,5 +1,10 @@
 # Wrist Image Dosha Classification - Project Architecture
 
+> **Note:** This document describes the *original* MobileNetV2 image-classification
+> approach (`inference.py` / `model.pth`). It is kept for reference. The **currently
+> deployed** model is the colour-feature classifier `model_color.joblib` served by
+> `app.py` — see the top-level [`README.md`](../README.md) and [`HANDOFF.md`](../HANDOFF.md).
+
 ## 📁 Project Structure
 
 ```

@@ -1,7 +1,7 @@
 """Map the 3-class (K/P/V) model's probabilities to the sheet's dual/single Prakriti
 labels, and score against palm_dataset_26 June 26.xlsx (via manifest y7).
 
-Rule (user's): take the two highest doshas -> dual dosha "top1-top2"; BUT if the
+Rule: take the two highest doshas -> dual dosha "top1-top2"; BUT if the
 dominant is Kapha and the second dosha is weak (prob < t), output single "K".
 (Only Kapha ever appears as a single-dosha label in the sheet.)
 

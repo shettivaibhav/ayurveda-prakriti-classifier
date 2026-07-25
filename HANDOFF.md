@@ -92,3 +92,9 @@ why the deployed model looks the way it does:
 4. **Accuracy is capped by capture conditions.** The most promising path to higher accuracy
    is standardised image capture (fixed lighting + a colour-reference card) so that palm
    colour and vein visibility become measurable, rather than a larger model.
+5. **Example thumbnails removed.** `app.py` can display a small example image per view from
+   a `mini/demo_images/` folder. Those example photos were removed (privacy); the app
+   handles their absence gracefully (`load_demo_image` returns `None` and the thumbnail is
+   simply skipped). Drop four neutral example images into `mini/demo_images/`
+   (`wristfrontopen.jpg`, `wristbackopen.jpg`, `wristfrontclose.jpg`, `wristbackclose.png`)
+   to restore them.

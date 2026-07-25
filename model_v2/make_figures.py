@@ -1,4 +1,4 @@
-"""Generate thesis figures from the saved result JSONs."""
+"""Generate summary figures from the saved result JSONs."""
 
 import json
 from pathlib import Path

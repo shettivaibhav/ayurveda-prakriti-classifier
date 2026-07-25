@@ -2,7 +2,7 @@
 
 Global feature importance for the tabular RandomForest, via (a) impurity-based
 importance and (b) permutation importance (model-agnostic, computed on held-out
-CV predictions), aggregated over repeats. Answers the thesis question "does the
+CV predictions), aggregated over repeats. Answers the question "does the
 model reason like an Ayurvedic practitioner?" -> we expect palm/skin colour and
 texture to dominate.
 """

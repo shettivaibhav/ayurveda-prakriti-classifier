@@ -1,5 +1,10 @@
 # Model Architecture and Design Decisions
 
+> **Note:** These decisions cover the *original* MobileNetV2 image classifier, kept for
+> reference. The currently deployed model is the colour-feature classifier
+> (`model_color.joblib`); see the top-level [`HANDOFF.md`](../HANDOFF.md) for why the
+> project moved away from raw-image CNNs.
+
 ## Project Overview
 This document explains the key decisions made in building a 3-class image classification system for wrist images (Vata, Pitta, Kapha) using PyTorch and transfer learning.
 
