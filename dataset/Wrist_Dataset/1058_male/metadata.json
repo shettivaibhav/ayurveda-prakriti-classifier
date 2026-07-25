@@ -1,0 +1,28 @@
+{
+    "id": "person_1058",
+    "gender": "male",
+    "device_model": "2201117PI",
+    "collection_date": "2025-11-19 16:53:12",
+    "images": [
+        {
+            "filename": "palm_open_front.jpg",
+            "file_size": 2291421,
+            "resolution": "3072x4096"
+        },
+        {
+            "filename": "palm_open_back.jpg",
+            "file_size": 2853970,
+            "resolution": "3072x4096"
+        },
+        {
+            "filename": "palm_closed_front.jpg",
+            "file_size": 2818660,
+            "resolution": "3072x4096"
+        },
+        {
+            "filename": "palm_closed_back.jpg",
+            "file_size": 2581972,
+            "resolution": "3072x4096"
+        }
+    ]
+}
