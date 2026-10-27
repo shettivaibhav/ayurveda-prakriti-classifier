@@ -1,0 +1,185 @@
+{
+  "Baseline (2-view ExtraTrees)": {
+    "name": "Baseline (2-view ExtraTrees)",
+    "accuracy_mean": 0.707251461988304,
+    "accuracy_std": 0.08040167959097981,
+    "balanced_acc_mean": 0.53,
+    "balanced_acc_std": 0.1204210719430002,
+    "macro_f1_mean": 0.5322321258137349,
+    "macro_f1_std": 0.1331088814507482,
+    "confusion_matrix": [
+      [
+        55,
+        2,
+        3
+      ],
+      [
+        9,
+        6,
+        1
+      ],
+      [
+        12,
+        3,
+        2
+      ]
+    ],
+    "classes": [
+      "K",
+      "P",
+      "V"
+    ]
+  },
+  "Unified RBF-SVM (Balanced)": {
+    "name": "Unified RBF-SVM (Balanced)",
+    "accuracy_mean": 0.6755555555555556,
+    "accuracy_std": 0.08450436065878406,
+    "balanced_acc_mean": 0.5633333333333332,
+    "balanced_acc_std": 0.12485052791633544,
+    "macro_f1_mean": 0.5532075121872223,
+    "macro_f1_std": 0.12126972850861557,
+    "confusion_matrix": [
+      [
+        44,
+        8,
+        8
+      ],
+      [
+        7,
+        6,
+        3
+      ],
+      [
+        5,
+        3,
+        9
+      ]
+    ],
+    "classes": [
+      "K",
+      "P",
+      "V"
+    ]
+  },
+  "Unified ExtraTrees (Balanced)": {
+    "name": "Unified ExtraTrees (Balanced)",
+    "accuracy_mean": 0.7010526315789474,
+    "accuracy_std": 0.08786062689016186,
+    "balanced_acc_mean": 0.5366666666666666,
+    "balanced_acc_std": 0.1355646627177517,
+    "macro_f1_mean": 0.5397923553855588,
+    "macro_f1_std": 0.15229082660496798,
+    "confusion_matrix": [
+      [
+        53,
+        4,
+        3
+      ],
+      [
+        10,
+        4,
+        2
+      ],
+      [
+        8,
+        2,
+        7
+      ]
+    ],
+    "classes": [
+      "K",
+      "P",
+      "V"
+    ]
+  },
+  "Unified Random Forest (Balanced)": {
+    "name": "Unified Random Forest (Balanced)",
+    "accuracy_mean": 0.684093567251462,
+    "accuracy_std": 0.07470050091561553,
+    "balanced_acc_mean": 0.4766666666666666,
+    "balanced_acc_std": 0.11984557965550068,
+    "macro_f1_mean": 0.4753076127788772,
+    "macro_f1_std": 0.14215624456749007,
+    "confusion_matrix": [
+      [
+        56,
+        2,
+        2
+      ],
+      [
+        12,
+        4,
+        0
+      ],
+      [
+        11,
+        2,
+        4
+      ]
+    ],
+    "classes": [
+      "K",
+      "P",
+      "V"
+    ]
+  },
+  "Unified Logistic Regression (Balanced)": {
+    "name": "Unified Logistic Regression (Balanced)",
+    "accuracy_mean": 0.5338011695906433,
+    "accuracy_std": 0.13731631733506228,
+    "balanced_acc_mean": 0.4488888888888888,
+    "balanced_acc_std": 0.17296970404819023,
+    "macro_f1_mean": 0.4316732114497628,
+    "macro_f1_std": 0.15670317331844313,
+    "confusion_matrix": [
+      [
+        38,
+        10,
+        12
+      ],
+      [
+        7,
+        4,
+        5
+      ],
+      [
+        5,
+        4,
+        8
+      ]
+    ],
+    "classes": [
+      "K",
+      "P",
+      "V"
+    ]
+  },
+  "Held-Out Test Evaluation": {
+    "n_held_out": 61,
+    "test_balanced_accuracy": 0.295970695970696,
+    "test_macro_f1": 0.2715179968701095,
+    "test_accuracy": 0.4262295081967213,
+    "test_confusion_matrix": [
+      [
+        23,
+        12,
+        0
+      ],
+      [
+        8,
+        3,
+        2
+      ],
+      [
+        5,
+        8,
+        0
+      ]
+    ],
+    "test_class_distribution": {
+      "K": 35,
+      "V": 13,
+      "P": 13
+    }
+  }
+}

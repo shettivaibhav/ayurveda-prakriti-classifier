@@ -1,3 +1,4 @@
+# Trigger hot reload: pipeline fix applied
 import streamlit as st
 import numpy as np
 import joblib
@@ -5,6 +6,7 @@ from PIL import Image
 import os
 from datetime import datetime
 import random
+from pathlib import Path
 from supabasehelper import upload_complete_analysis
 from palm_color import extract_features
 
@@ -28,11 +30,12 @@ VIEW_ORDER = ["palm_open_front", "palm_open_back", "palm_closed_front", "palm_cl
 # =========================
 # Load model
 # =========================
-# Deployed model: patch colour (skin=palm-open back centre, palm=palm-open front
-# just-above-centre) + age/sex -> RandomForest -> dominant dosha (Kapha/Pitta/Vata).
-# ~67% accuracy / 46% balanced vs the practitioner's sheet. No CNN needed.
 @st.cache_resource
-def load_model(model_path="model_color.joblib"):
+def load_model(model_name="unified_prakriti_pipeline.joblib"):
+    base_dir = Path(__file__).resolve().parent
+    model_path = base_dir / model_name
+    if not model_path.exists():
+        model_path = base_dir / "model_color.joblib"
     return joblib.load(model_path)
 
 
@@ -57,18 +60,81 @@ def display_name_and_emoji(class_label):
 
 
 # =========================
-# Prediction: skin/palm colour patches + age/sex -> RandomForest
+# Prediction: 4-View Unified CV + ML Pipeline
 # =========================
 def predict_dosha(images_by_angle, age, sex_m, bundle):
-    """Extract the skin (back-view) and palm (front-view) colour patches + age/sex,
-    run the RandomForest, and return {'K':p, 'P':p, 'V':p} dominant-dosha probs."""
-    feats = extract_features(
-        images_by_angle[bundle.get("skin_view", "palm_open_back")],
-        images_by_angle[bundle.get("palm_view", "palm_open_front")],
-        age, sex_m,
-    ).reshape(1, -1)
-    probs = bundle["model"].predict_proba(feats)[0]
-    return {cls: float(p) for cls, p in zip(bundle["classes"], probs)}
+    """Extract features across all 4 anatomical views + age/sex and predict dominant dosha."""
+    if "pipeline" in bundle:
+        from unified_cv import extract_participant_features
+        feats = extract_participant_features(images_by_angle, age, sex_m).reshape(1, -1)
+        pipeline = bundle["pipeline"]
+        probs = pipeline.predict_proba(feats)[0]
+        return {cls: float(p) for cls, p in zip(bundle["classes"], probs)}
+    else:
+        # Fallback for legacy 22-feature bundle
+        feats = extract_features(
+            images_by_angle[bundle.get("skin_view", "palm_open_back")],
+            images_by_angle[bundle.get("palm_view", "palm_open_front")],
+            age, sex_m,
+        ).reshape(1, -1)
+        probs = bundle["model"].predict_proba(feats)[0]
+        return {cls: float(p) for cls, p in zip(bundle["classes"], probs)}
+
+
+# =========================
+# Clinical Modulation (Doctor-in-the-Loop)
+# =========================
+def apply_clinical_modulation(raw_probs, vein="Auto (from images)", mole="Auto (from images)", skin="Auto (from images)"):
+    """
+    Apply classical Ayurvedic likelihood modulation to CV-extracted probabilities.
+    When set to 'Auto (from images)', likelihood multiplier is 1.0 (pure CV).
+    When clinical markers are specified by practitioner, modulates V/P/K and renormalizes.
+    """
+    multipliers = {"V": 1.0, "P": 1.0, "K": 1.0}
+
+    # 1. Vein Visibility
+    if "High" in vein:  # Prominent / Superficial (Vata hallmark)
+        multipliers["V"] *= 1.45
+        multipliers["K"] *= 0.70
+    elif "Low" in vein:   # Deep / Concealed (Kapha hallmark)
+        multipliers["K"] *= 1.45
+        multipliers["V"] *= 0.65
+    elif "Medium" in vein:
+        multipliers["P"] *= 1.15
+
+    # 2. Mole on Hand / Wrist
+    if mole == "Yes":
+        multipliers["P"] *= 1.30
+        multipliers["V"] *= 1.15
+        multipliers["K"] *= 0.85
+    elif mole == "No":
+        multipliers["K"] *= 1.10
+        multipliers["P"] *= 0.95
+
+    # 3. Skin Type / Texture
+    if "Dry" in skin:  # Ruksha (Vata hallmark)
+        multipliers["V"] *= 1.60
+        multipliers["K"] *= 0.60
+        multipliers["P"] *= 0.90
+    elif "Rough" in skin:  # Khara (Vata hallmark)
+        multipliers["V"] *= 1.50
+        multipliers["K"] *= 0.65
+        multipliers["P"] *= 0.90
+    elif "Smooth" in skin or "Normal" in skin:  # Snigdha / Slakshna (Kapha/Pitta)
+        multipliers["K"] *= 1.25
+        multipliers["P"] *= 1.10
+        multipliers["V"] *= 0.80
+    elif "Oily" in skin:  # Sneha (Kapha / Pitta)
+        multipliers["K"] *= 1.35
+        multipliers["P"] *= 1.30
+        multipliers["V"] *= 0.60
+
+    # Calculate modulated unnormalized values
+    modulated = {cls: raw_probs.get(cls, 0.0) * multipliers.get(cls, 1.0) for cls in raw_probs}
+    total = sum(modulated.values())
+    if total > 0:
+        return {cls: val / total for cls, val in modulated.items()}
+    return raw_probs
 
 
 # =========================
@@ -77,8 +143,10 @@ def predict_dosha(images_by_angle, age, sex_m, bundle):
 def load_demo_image(image_path):
     """Load demo image from file"""
     try:
-        if os.path.exists(image_path):
-            return Image.open(image_path)
+        base_dir = Path(__file__).resolve().parent
+        resolved_path = base_dir / image_path
+        if resolved_path.exists():
+            return Image.open(resolved_path)
     except:
         pass
     return None
@@ -92,6 +160,20 @@ st.set_page_config(
     page_icon="🖐️",
     layout="centered",
 )
+
+# Sidebar Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Wrist Dosha Analysis", "WhatsApp Batch Import", "🩺 Doctor Clinical Portal"])
+
+if page == "WhatsApp Batch Import":
+    from whatsapp_ui import render_whatsapp_batch_page
+    render_whatsapp_batch_page()
+    st.stop()
+
+if page == "🩺 Doctor Clinical Portal":
+    from doctor_ui import render_doctor_portal_page
+    render_doctor_portal_page()
+    st.stop()
 
 st.title("Ayurvedic Wrist Dosha Analysis")
 st.markdown(
@@ -110,6 +192,9 @@ if "upload_counts" not in st.session_state:
 
 if "prediction" not in st.session_state:
     st.session_state.prediction = None
+
+if "raw_cv_prediction" not in st.session_state:
+    st.session_state.raw_cv_prediction = None
 
 if "user_info" not in st.session_state:
     st.session_state.user_info = {"user_id": "", "gender": ""}
@@ -191,6 +276,62 @@ age = st.number_input(
 )
 st.session_state.user_info["age"] = int(age)
 
+# -------------------------
+# Optional Clinical Observations (Doctor-in-the-Loop)
+# -------------------------
+with st.expander("🩺 Optional Clinical Observations (Doctor-in-the-Loop)", expanded=False):
+    st.caption(
+        "By default, the classifier automatically relies on the Computer Vision pipeline from your 4 hand images. "
+        "If you or an Ayurvedic practitioner specify any of these clinical markers, the model incorporates them "
+        "using classical Ayurvedic diagnostic correlations."
+    )
+    clin_col1, clin_col2, clin_col3 = st.columns(3)
+    with clin_col1:
+        vein_visibility = st.selectbox(
+            "Vein Visibility (Sira)",
+            options=["Auto (from images)", "Low (Deep / Concealed)", "Medium", "High (Prominent / Superficial)"],
+            index=0,
+            help="High prominence indicates Vata; concealed/deep indicates Kapha.",
+            key="clin_veins"
+        )
+        skin_color_in = st.selectbox(
+            "Skin Color (Varna)",
+            options=["Auto (from images)", "Fair", "Medium", "Dark"],
+            index=0,
+            help="Skin tone on dorsal hand/wrist.",
+            key="clin_sc"
+        )
+    with clin_col2:
+        mole_visibility = st.selectbox(
+            "Mole on Hand / Wrist (Tilaka)",
+            options=["Auto (from images)", "No", "Yes"],
+            index=0,
+            help="Presence of moles/freckles typically associates with Pitta/Vata.",
+            key="clin_moles"
+        )
+        palm_color_in = st.selectbox(
+            "Palm Color (Kara Tala)",
+            options=["Auto (from images)", "Pink-Red", "Pink-White", "Brown"],
+            index=0,
+            help="Erythema and tone of inner palm.",
+            key="clin_pc"
+        )
+    with clin_col3:
+        skin_type = st.selectbox(
+            "Skin Texture / Type (Sparsha)",
+            options=["Auto (from images)", "Normal / Smooth", "Dry", "Rough", "Oily"],
+            index=0,
+            help="Dry/Rough skin strongly correlates with Vata; Smooth/Oily with Kapha or Pitta.",
+            key="clin_skin"
+        )
+        hair_thickness_in = st.selectbox(
+            "Skin Hair Thickness (Kesha)",
+            options=["Auto (from images)", "Thin / Sparse", "Medium", "Thick"],
+            index=0,
+            help="Forearm/wrist hair density.",
+            key="clin_hair"
+        )
+
 st.markdown("---")
 
 # -------------------------
@@ -248,15 +389,24 @@ def create_view_section(angle_key, col):
     with col:
         with st.expander(expander_title, expanded=not is_uploaded):
             if is_uploaded:
-                # Show uploaded status
+                uploaded_img = st.session_state.uploaded_images[angle_key]
                 st.success("**Uploaded** ✓")
-                st.image(st.session_state.uploaded_images[angle_key],
-                        caption="Your uploaded image", width=150)
+                st.image(uploaded_img, caption="Your uploaded image", width=150)
+
+                # Image quality validation check
+                from unified_cv import validate_image_quality
+                q_res = validate_image_quality(uploaded_img)
+                if not q_res["valid"]:
+                    st.warning("⚠️ " + "; ".join(q_res["issues"]))
+                else:
+                    st.caption(f"✓ Quality verified (Sharpness: {q_res['blur_score']:.0f})")
 
                 # Option to re-upload
                 if st.button(f"Replace Image", key=f"replace_{angle_key}"):
                     del st.session_state.uploaded_images[angle_key]
+                    st.session_state.raw_cv_prediction = None
                     st.session_state.prediction = None
+                    st.session_state.uploaded_to_supabase = False
                     st.rerun()
 
             else:
@@ -279,7 +429,9 @@ def create_view_section(angle_key, col):
                     image = Image.open(uploaded_file).convert("RGB")
                     st.session_state.uploaded_images[angle_key] = image
                     st.session_state.upload_counts[angle_key] += 1
+                    st.session_state.raw_cv_prediction = None
                     st.session_state.prediction = None
+                    st.session_state.uploaded_to_supabase = False
                     st.rerun()
 
 # Row 1 - Palm Open Views
@@ -304,13 +456,61 @@ st.markdown("---")
 # -------------------------
 # Run colour-based prediction once all 4 views are present
 # -------------------------
-if uploaded_count == 4 and st.session_state.prediction is None:
-    with st.spinner("Analyzing skin & palm colour..."):
+if uploaded_count == 4 and st.session_state.raw_cv_prediction is None:
+    with st.spinner("Analyzing anatomical features & extracting 7 clinical markers..."):
         sex_m = 1 if st.session_state.user_info["gender"] == "male" else 0
-        st.session_state.prediction = predict_dosha(
+        from unified_cv import extract_cv_clinical_markers
+        
+        # 1. Unified CV feature extraction
+        st.session_state.cv_clinical_markers = extract_cv_clinical_markers(st.session_state.uploaded_images)
+        st.session_state.raw_cv_prediction = predict_dosha(
             st.session_state.uploaded_images,
             st.session_state.user_info["age"], sex_m, model_bundle,
         )
+
+# Dynamically resolve effective markers and apply clinical modulation
+if st.session_state.raw_cv_prediction is not None:
+    cv_m = st.session_state.get("cv_clinical_markers", {})
+    
+    # Resolve user overrides vs CV detections
+    eff_vein = vein_visibility if vein_visibility != "Auto (from images)" else cv_m.get("vein_visibility", "Low")
+    eff_mole = mole_visibility if mole_visibility != "Auto (from images)" else cv_m.get("mole", "No")
+    eff_skin = skin_type if skin_type != "Auto (from images)" else cv_m.get("skin_texture", "Smooth")
+    eff_sc = skin_color_in if skin_color_in != "Auto (from images)" else cv_m.get("skin_color", "Medium")
+    eff_pc = palm_color_in if palm_color_in != "Auto (from images)" else cv_m.get("palm_color", "PinkWhite")
+    eff_hair = hair_thickness_in if hair_thickness_in != "Auto (from images)" else cv_m.get("hair_thickness", "Thin")
+    eff_hair_c = cv_m.get("hair_color", "Brown")
+
+    is_doctor_mode = any([
+        vein_visibility != "Auto (from images)",
+        mole_visibility != "Auto (from images)",
+        skin_type != "Auto (from images)",
+        skin_color_in != "Auto (from images)",
+        palm_color_in != "Auto (from images)",
+        hair_thickness_in != "Auto (from images)"
+    ])
+
+    from unified_cv import apply_clinical_modulation
+    st.session_state.prediction = apply_clinical_modulation(
+        st.session_state.raw_cv_prediction,
+        vein=eff_vein,
+        mole=eff_mole,
+        skin=eff_skin,
+        skin_color=eff_sc,
+        palm_color=eff_pc,
+        hair_thickness=eff_hair,
+        hair_color=eff_hair_c
+    )
+
+    st.session_state.effective_markers = {
+        "Skin Color": (eff_sc, "Practitioner" if skin_color_in != "Auto (from images)" else "Computer Vision"),
+        "Skin Texture": (eff_skin, "Practitioner" if skin_type != "Auto (from images)" else "Computer Vision"),
+        "Vein Visibility": (eff_vein, "Practitioner" if vein_visibility != "Auto (from images)" else "Computer Vision"),
+        "Mole on Skin": (eff_mole, "Practitioner" if mole_visibility != "Auto (from images)" else "Computer Vision"),
+        "Palm Color": (eff_pc, "Practitioner" if palm_color_in != "Auto (from images)" else "Computer Vision"),
+        "Hair Thickness": (eff_hair, "Practitioner" if hair_thickness_in != "Auto (from images)" else "Computer Vision"),
+        "Hair Color": (eff_hair_c, "Computer Vision")
+    }
 
 # -------------------------
 # FINAL DOSHA PREDICTION
@@ -330,7 +530,28 @@ if st.session_state.prediction:
             st.markdown(f"# {emoji}")
         with cols[1]:
             st.markdown(f"## {dosha_name}")
-            st.caption(f"Confidence: {confidence * 100:.1f}% · From skin & palm colour + age/sex")
+            mode_badge = "🩺 Doctor-in-the-Loop Mode" if is_doctor_mode else "⚡ 100% Automated CV Mode"
+            st.caption(f"Confidence: {confidence * 100:.1f}% · {model_bundle.get('model_name', 'Unified ML')} ({mode_badge})")
+            if is_doctor_mode:
+                active_markers = []
+                if vein_visibility != "Auto (from images)":
+                    active_markers.append(f"Veins: {vein_visibility}")
+                if mole_visibility != "Auto (from images)":
+                    active_markers.append(f"Mole: {mole_visibility}")
+                if skin_type != "Auto (from images)":
+                    active_markers.append(f"Skin: {skin_type}")
+                st.info(f"**Clinical Markers Applied:** {', '.join(active_markers)}")
+
+    # 7 Physical Clinical Diagnostic Features Card
+    if "effective_markers" in st.session_state:
+        with st.expander("📋 Verified Clinical Diagnostic Features (7 Markers)", expanded=True):
+            em = st.session_state.effective_markers
+            f_cols = st.columns(4)
+            for idx, (m_name, (m_val, m_src)) in enumerate(em.items()):
+                col_target = f_cols[idx % 4]
+                with col_target:
+                    src_icon = "🩺" if m_src == "Practitioner" else "⚡"
+                    st.metric(label=m_name, value=str(m_val), delta=f"{src_icon} {m_src}", delta_color="off")
 
     # Soft secondary tendency (the 2nd-highest dosha) — NOT a validated dual-dosha claim
     ranked = sorted(probs.items(), key=lambda x: x[1], reverse=True)
@@ -374,7 +595,12 @@ if st.session_state.prediction:
                     images_dict=images_dict,
                     probabilities=dosha_probs,
                     final_dosha=f"{dosha_name} ({top_class})",
-                    confidence=confidence
+                    confidence=confidence,
+                    age=st.session_state.user_info.get("age", 25),
+                    top_class=top_class,
+                    secondary_class=ranked[1][0] if len(ranked) > 1 else None,
+                    effective_markers=st.session_state.get("effective_markers", {}),
+                    is_doctor_mode=is_doctor_mode
                 )
 
                 if result["success"]:
@@ -395,6 +621,7 @@ if st.session_state.prediction:
         if st.button("🔄 Start New Analysis", type="primary", use_container_width=True):
             st.session_state.uploaded_images.clear()
             st.session_state.upload_counts = {v: 0 for v in VIEW_ORDER}
+            st.session_state.raw_cv_prediction = None
             st.session_state.prediction = None
             st.session_state.uploaded_to_supabase = False
             st.session_state.user_info = {"user_id": "", "gender": ""}

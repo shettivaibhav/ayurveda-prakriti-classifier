@@ -32,7 +32,26 @@ but are **not** used by the current app.
 | `model_v2/avg/train_color_model.py` | Trains and saves the deployed `model_color.joblib`. |
 | `model_v2/avg/exp_tuned.py` | Nested-CV hyperparameter tuning that selects the deployed model. |
 
-## Running the app
+## Quick Start (Master Runner Script)
+
+All project commands (running the web app, test suite, WhatsApp AI pipeline, and PDF documentation) can be launched directly using the master runner:
+
+```bash
+# Windows Batch (Interactive Menu or CLI)
+run.bat               # Opens interactive menu
+run.bat app           # Launches Streamlit Web App
+run.bat test          # Runs End-to-End System Tests
+run.bat docs          # Generates Technical Documentation PDFs
+run.bat pipeline      # Runs WhatsApp Agentic AI Batch Pipeline
+run.bat all           # Runs full verification suite (Tests + Docs)
+
+# Or via Python directly:
+python run_project.py --app
+python run_project.py --test
+python run_project.py --all
+```
+
+## Running the app directly
 
 ```bash
 python -m venv .venv && source .venv/bin/activate

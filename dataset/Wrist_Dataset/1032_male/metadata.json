@@ -24,5 +24,23 @@
             "file_size": 3350518,
             "resolution": "3072x4096"
         }
-    ]
+    ],
+    "participant_name": "Unknown",
+    "age": 21,
+    "validation_status": "Verified (Clinical Ground Truth)",
+    "doctor_verified_prakriti": "K-V",
+    "dominant_dosha": "K",
+    "subdominant_dosha": "V",
+    "dosha_hierarchy": "Kapha is dominant; Vata is sub-dominant (distinct from V-K)",
+    "doctor_verified_features": {
+        "vein_visibility": "Low",
+        "mole": "No",
+        "skin_texture": "Smooth",
+        "skin_color": "Fair",
+        "palm_color": "PinkWhite",
+        "hair_thickness": "Med",
+        "hair_color": "Black"
+    },
+    "cohort": "Cohort 1 (Original Clinical Benchmark)",
+    "is_duplicate": false
 }

@@ -22,12 +22,21 @@ mini/.streamlit/secrets.toml
 *.log
 *.zip
 
+# Reference files
+Abin Anto*
+
 # Data — human-subject images and spreadsheets are NOT distributed with this repo
+
 *.xlsx
+*.bak
+dataset/
 Wrist_Dataset/
 palm_dataset_full/
 WristClassifiedData/
 SubmissionFiles/
+staging/
+staging_zip_import/
+scratch_uploaded_chat.txt
 **/metadata.json
 **/*_manifest.csv
 manifest.csv
@@ -36,3 +45,4 @@ dataset_manifest.csv
 # Cached feature embeddings (regenerate from source data)
 *.npz
 .cache/
+

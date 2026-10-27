@@ -24,5 +24,23 @@
             "file_size": 6457391,
             "resolution": "4000x3000"
         }
-    ]
+    ],
+    "participant_name": "Unknown",
+    "age": 22,
+    "validation_status": "Verified (Clinical Ground Truth)",
+    "doctor_verified_prakriti": "K",
+    "dominant_dosha": "K",
+    "subdominant_dosha": null,
+    "dosha_hierarchy": "Pure single-dosha dominant Kapha",
+    "doctor_verified_features": {
+        "vein_visibility": "Low",
+        "mole": "Yes",
+        "skin_texture": "Smooth",
+        "skin_color": "Fair",
+        "palm_color": "PinkWhite",
+        "hair_thickness": "Med",
+        "hair_color": "Black"
+    },
+    "cohort": "Cohort 1 (Original Clinical Benchmark)",
+    "is_duplicate": false
 }

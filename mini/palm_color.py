@@ -9,6 +9,7 @@ RandomForest. No CNN needed at inference.
 """
 
 import numpy as np
+from PIL import Image
 from skimage.color import rgb2lab
 
 SKIN_VIEW = "palm_open_back"     # skin colour read from back of hand, centre
@@ -28,11 +29,14 @@ FEATURE_NAMES = (
 def patch_color(pil_img, cy_frac, half=HALF):
     """Mean colour descriptor (RGB, Lab, normalised-rgb chroma, redness) of a square
     patch centred at (width/2, height*cy_frac). 10 features."""
-    im = np.asarray(pil_img.convert("RGB")).astype(float)
-    H, W = im.shape[:2]
+    W, H = pil_img.size
     cx, cy = W // 2, int(H * cy_frac)
-    hw, hh = int(W * half), int(H * half)
-    patch = im[max(0, cy - hh):cy + hh, max(0, cx - hw):cx + hw].reshape(-1, 3) / 255.0
+    hw, hh = max(4, int(W * half)), max(4, int(H * half))
+    patch_img = pil_img.crop((max(0, cx - hw), max(0, cy - hh), min(W, cx + hw), min(H, cy + hh))).convert("RGB")
+    pw, ph = patch_img.size
+    if pw > 256 or ph > 256:
+        patch_img = patch_img.resize((min(pw, 256), min(ph, 256)), Image.BILINEAR)
+    patch = np.asarray(patch_img).astype(float).reshape(-1, 3) / 255.0
     rgb = patch.mean(0)
     lab = rgb2lab(patch.reshape(-1, 1, 3)).reshape(-1, 3).mean(0)
     s = patch.sum(1) + 1e-6
