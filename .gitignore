@@ -46,3 +46,8 @@ dataset_manifest.csv
 *.npz
 .cache/
 
+# PDF Generator Code
+generate_*_pdf.py
+generate_project_pdf.py
+
+
