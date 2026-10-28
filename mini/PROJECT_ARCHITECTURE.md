@@ -1,9 +1,9 @@
 # Wrist Image Dosha Classification - Project Architecture
 
 > **Note:** This document describes the *original* MobileNetV2 image-classification
-> approach (`inference.py` / `model.pth`). It is kept for reference. The **currently
-> deployed** model is the colour-feature classifier `model_color.joblib` served by
-> `app.py` — see the top-level [`README.md`](../README.md) and [`HANDOFF.md`](../HANDOFF.md).
+> approach (`inference.py` / `model.pth`) for historical reference. The current application
+> uses the React frontend, `server.py`, and `unified_prakriti_pipeline.joblib` — see the
+> top-level [`README.md`](../README.md) and [`HANDOFF.md`](../HANDOFF.md).
 
 ## 📁 Project Structure
 
@@ -11,7 +11,8 @@
 mini/
 ├── training_pipeline.ipynb    # Main training notebook
 ├── inference.py               # Standalone inference script
-├── app.py                     # Streamlit web application
+├── server.py                  # Local API and React app server
+├── classifier_service.py      # Model loading, inference, and clinical modulation
 ├── model.pth                  # Trained model checkpoint
 ├── requirements.txt           # Python dependencies
 ├── model_decisions.md         # Design decisions documentation
@@ -128,7 +129,7 @@ mini/
 │  │ • All Class Probabilities             │                  │
 │  └──────────────────────────────────────┘                  │
 │                                                              │
-│  Option 2: Web App (app.py - Streamlit)                    │
+│  Option 2: React Web App + Local Python API                │
 │  ┌──────────────────────────────────────┐                  │
 │  │  Upload Image → Classify → Results   │                  │
 │  │                                       │                  │
@@ -183,7 +184,7 @@ validate_epoch(): Validate without gradients, return predictions
 Role:             Orchestrate training process
 ```
 
-### 4. **Dosha Classifier Logic (Streamlit)**
+### 4. **Dosha Classifier Logic (React API)**
 ```python
 classify_dosha(): 
   - Analyzes probability distribution
@@ -222,8 +223,8 @@ classify_dosha():
 # Terminal inference
 python inference.py <image_path>
 
-# Web interface
-streamlit run app.py
+# React interface and local API
+python server.py
 ```
 
 ### Production (Future)
@@ -250,7 +251,7 @@ Deployment:
 | **Data Processing** | NumPy, Pandas, PIL |
 | **Visualization** | Matplotlib, Seaborn |
 | **Metrics** | scikit-learn |
-| **Web App** | Streamlit |
+| **Web App** | React + local Python API |
 | **Environment** | Python 3.13 + venv |
 
 ---
@@ -309,7 +310,8 @@ Threshold: **15%** (0.15 probability difference)
 |------|---------|
 | `training_pipeline.ipynb` | Complete training workflow |
 | `inference.py` | CLI prediction tool |
-| `app.py` | Web-based classifier |
+| `server.py` | Local API serving the React classifier |
+| `classifier_service.py` | Deployed model and clinical scoring services |
 | `model.pth` | Trained model weights |
 | `model_decisions.md` | Architecture rationale |
 | `requirements.txt` | Python dependencies |

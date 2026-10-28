@@ -5,7 +5,7 @@ REM ============================================================================
 REM   This batch script encapsulates all commands required to run the project.
 REM   
 REM   Direct CLI Commands:
-REM     run.bat app        -> Launches Streamlit Web UI (mini\app.py)
+REM     run.bat app        -> Launches the React Web UI and local API
 REM     run.bat test       -> Runs End-to-End System Tests (test_unified_system.py)
 REM     run.bat docs       -> Generates Technical PDFs (generate_project_pdf.py)
 REM     run.bat pipeline   -> Runs WhatsApp Batch AI Pipeline (run_pipeline.py)
@@ -20,10 +20,8 @@ cd /d "%~dp0"
 REM Identify Python Executable
 if exist ".venv\Scripts\python.exe" (
     set "PYTHON_EXE=.venv\Scripts\python.exe"
-    set "STREAMLIT_EXE=.venv\Scripts\streamlit.exe"
 ) else (
     set "PYTHON_EXE=python"
-    set "STREAMLIT_EXE=streamlit"
 )
 
 REM If an argument was provided, pass it directly to run_project.py
@@ -42,7 +40,7 @@ echo ===========================================================================
 echo.
 echo  Please choose an action:
 echo.
-echo    [1] Launch Streamlit Web Application (mini\app.py)
+echo    [1] Launch React Web Application
 echo    [2] Run End-to-End Verification Tests (test_unified_system.py)
 echo    [3] Generate Technical Documentation & Proposal PDFs
 echo    [4] Run WhatsApp Agentic AI Batch Pipeline
@@ -53,7 +51,7 @@ echo.
 set /p CHOICE="Enter your selection [1-6, 0]: "
 
 if "%CHOICE%"=="1" (
-    "%STREAMLIT_EXE%" run mini\app.py
+    "%PYTHON_EXE%" run_project.py app
     goto :end
 )
 if "%CHOICE%"=="2" (

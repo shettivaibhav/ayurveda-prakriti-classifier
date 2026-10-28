@@ -4,16 +4,17 @@ Predict a person's dominant Ayurvedic dosha — **Kapha (K)**, **Pitta (P)**, or
 from four standardised hand photographs plus age and sex. The dataset was labelled by a
 practising Ayurvedic clinician.
 
-The deployed model is **fully automated**: the only inputs taken from the person are age and
-sex; everything else is derived from the images.
+The deployed model is **fully automated** by default: the only inputs taken from the person
+are age and sex; everything else is derived from the images. Practitioners can optionally
+enter clinical observations in the assessment.
 
 ## What is deployed
 
-The Streamlit app (`mini/app.py`) serves **`mini/model_color.joblib`** — a tuned
-**Extremely Randomized Trees (ExtraTrees)** classifier over colour-patch features
-(skin-colour from the back-of-hand view, palm-colour from the front-of-hand view; RGB +
-CIELAB + chroma + redness) combined with age and sex. Feature extraction is shared between
-training and inference in `mini/palm_color.py`.
+The React app (`frontend/`) uses a local Python API (`mini/server.py`) to serve
+**`mini/unified_prakriti_pipeline.joblib`** — a tuned
+**Unified RBF-SVM (Balanced)** classifier over a 70-feature vector from four hand views,
+age, and sex. Feature extraction and image quality checks are shared through
+`mini/unified_cv.py`.
 
 The earlier CNN checkpoints (`mini/model.pth`, `mini/model_v2.pth`) are kept for reference
 but are **not** used by the current app.
@@ -22,9 +23,11 @@ but are **not** used by the current app.
 
 | Path | Purpose |
 |------|---------|
-| `mini/` | Deployed Streamlit app, the deployed colour model, and the original CNN lineage. |
-| `mini/app.py` | The app: collects 4 hand images + age/sex, predicts dominant dosha, stores results. |
-| `mini/palm_color.py` | Colour-patch feature extractor (shared by app + training). |
+| `frontend/` | React user interface for personal assessments, WhatsApp imports, and clinical review. |
+| `mini/server.py` | Local API and built React app server; preserves the analysis and clinician workflows. |
+| `mini/classifier_service.py` | Shared model loading, four-view inference, and clinical probability modulation. |
+| `mini/unified_cv.py` | Four-view feature extraction, clinical marker extraction, and image quality checks. |
+| `mini/palm_color.py` | Colour-patch feature extractor used by the earlier color-model experiments. |
 | `mini/inference.py` | Original MobileNetV2 3-class architecture + CLI inference. |
 | `model_v2/` | Data loading, model architectures, training, and tabular/image experiments. |
 | `model_v2/models.py` | `WristClassifier` + `WristMultiViewClassifier` (4-view fusion). |
@@ -39,7 +42,7 @@ All project commands (running the web app, test suite, WhatsApp AI pipeline, and
 ```bash
 # Windows Batch (Interactive Menu or CLI)
 run.bat               # Opens interactive menu
-run.bat app           # Launches Streamlit Web App
+run.bat app           # Builds the React UI if needed, then launches the web app
 run.bat test          # Runs End-to-End System Tests
 run.bat docs          # Generates Technical Documentation PDFs
 run.bat pipeline      # Runs WhatsApp Agentic AI Batch Pipeline
@@ -51,17 +54,33 @@ python run_project.py --test
 python run_project.py --all
 ```
 
-## Running the app directly
+## Running the React app
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r mini/requirements.txt
+npm --prefix frontend ci
+npm --prefix frontend run build
+python run_project.py --app
+```
 
-# Supabase is used to store results. Provide your own credentials:
-cp mini/.streamlit/secrets.toml.example mini/.streamlit/secrets.toml
-#   ... then edit mini/.streamlit/secrets.toml with your project url + key
+The app is available at `http://localhost:8501`. On Windows, `run.bat app` builds the
+frontend on first launch when Node.js/npm are installed.
 
-streamlit run mini/app.py
+For frontend development, run the local Python API and Vite in two terminals:
+
+```bash
+python mini/server.py --api-only --port 8000
+npm --prefix frontend run dev
+```
+
+Then open `http://localhost:5173`.
+
+Install the Python project dependencies in the selected environment before launch:
+
+```bash
+python -m pip install -r mini/requirements.txt
+
+# Set SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY, and GROQ_API_KEY in the environment
+# when those connected services are needed. Existing local secrets.toml files are also read.
 ```
 
 ## Dataset

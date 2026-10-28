@@ -6,11 +6,10 @@ findings, and the known issues to address first.
 
 ## 1. Current state
 
-- **Deployed model:** `mini/model_color.joblib` — a tuned **ExtraTrees** classifier over
-  colour-patch features (skin + palm) plus age and sex, predicting the **3-class dominant
-  dosha** (Kapha / Pitta / Vata). Served by `mini/app.py`.
-- **Feature extraction:** `mini/palm_color.py` is shared by the app and the training script,
-  so inference and training always use identical features.
+- **Deployed model:** `mini/unified_prakriti_pipeline.joblib` — the four-view **Unified RBF-SVM**
+  pipeline, served by the React frontend and `mini/server.py`.
+- **Feature extraction:** `mini/unified_cv.py` supplies the 70-feature vector and clinical
+  markers used by the React assessment API.
 - **Older models (reference only, not used by the app):**
   - `mini/model.pth` — the original single-view MobileNetV2 3-class classifier.
   - `mini/model_v2.pth` — a frozen-backbone MobileNetV2 that averages predictions over the
@@ -20,7 +19,8 @@ findings, and the known issues to address first.
 
 | Area | What lives there |
 |------|------------------|
-| `mini/` | Deployed Streamlit app, `palm_color.py` features, the deployed `.joblib`, and the original CNN files (`inference.py`, `model.pth`). |
+| `frontend/` | React assessment, WhatsApp batch import, and clinician review interface. |
+| `mini/` | Local API, deployed `.joblib`, feature extraction, clinician backend, and original CNN files. |
 | `model_v2/` | The rebuilt pipeline: `data.py` / `datasets.py` (data), `models.py` (architectures), `train.py` / `evaluate.py` (training), and `exp_*.py` (tabular, image-fusion, explainability experiments). |
 | `model_v2/avg/` | 4-view averaging experiments and the colour-model line: `train_color_model.py` (builds the deployed model), `exp_tuned.py` (nested-CV model selection), `extract_*` (features), `verify_*` (deployment checks), `eval_oldmodel*` (old-vs-new comparisons). |
 
@@ -82,9 +82,8 @@ why the deployed model looks the way it does:
 
 1. **Rotate the Supabase key.** The project's Supabase URL + publishable key were previously
    committed to an older repository and stored in a local `secrets.toml`. Treat the key as
-   compromised: rotate it in the Supabase dashboard, and create your own
-   `mini/.streamlit/secrets.toml` from `mini/.streamlit/secrets.toml.example`. Never commit
-   the real file (it is git-ignored).
+   compromised: rotate it in the Supabase dashboard, and provide replacement values through
+   environment variables or a local secrets file. Never commit real credentials.
 2. **Bring your own data.** See section 3 — the dataset is intentionally excluded. Cached
    embeddings (`*.npz`) and manifest CSVs are git-ignored and must be regenerated.
 3. **The original training notebook** (`mini/training_pipeline.ipynb`) has had its outputs
@@ -92,9 +91,5 @@ why the deployed model looks the way it does:
 4. **Accuracy is capped by capture conditions.** The most promising path to higher accuracy
    is standardised image capture (fixed lighting + a colour-reference card) so that palm
    colour and vein visibility become measurable, rather than a larger model.
-5. **Example thumbnails removed.** `app.py` can display a small example image per view from
-   a `mini/demo_images/` folder. Those example photos were removed (privacy); the app
-   handles their absence gracefully (`load_demo_image` returns `None` and the thumbnail is
-   simply skipped). Drop four neutral example images into `mini/demo_images/`
-   (`wristfrontopen.jpg`, `wristbackopen.jpg`, `wristfrontclose.jpg`, `wristbackclose.png`)
-   to restore them.
+5. **Example photos:** The React interface gives text guidance for each hand view and does
+   not depend on bundled sample photographs.

@@ -10,7 +10,7 @@ By leveraging computer vision feature extraction—specifically skin and palm co
 ## Key Features:
 • Automated skin and palm color-patch feature extraction (RGB, CIELAB, Chroma, and Redness indices) from multi-view hand photographs.
 • Non-invasive prediction of dominant Ayurvedic doshas (Vata, Pitta, Kapha) using tuned machine learning models (ExtraTrees).
-• Dual access modes: Interactive web-based analytics dashboard (Streamlit) and automated WhatsApp conversational pipeline.
+• React web interface for assessments and practitioner workflows, alongside the automated WhatsApp conversational pipeline.
 • Automated image view classification and input validation for standardized multi-angle hand captures.
 • Centralized database synchronization (Supabase) for secure patient records and longitudinal history tracking.
 • Interactive visualization of dosha probability distributions, visual KPIs, and clinical reports.

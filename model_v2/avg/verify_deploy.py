@@ -1,6 +1,4 @@
-"""Headless check that mini/model_v2.pth loads with the SAME architecture and
-inference logic mini/app.py uses, and produces a valid averaged prediction from a
-real subject's 4 hand images."""
+"""Headless check for the archived averaged MobileNetV2 checkpoint."""
 
 from pathlib import Path
 
@@ -13,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CKPT = ROOT / "mini" / "model_v2.pth"
 
 
-class WristClassifier(nn.Module):  # identical to mini/app.py
+class WristClassifier(nn.Module):  # architecture used by the archived checkpoint
     def __init__(self, num_classes, pretrained=False):
         super().__init__()
         self.backbone = models.mobilenet_v2(weights=None)

@@ -9,7 +9,7 @@ It documents all system commands and provides an automated, menu-driven or
 CLI-based interface to run any part of the project with a single command.
 
 Available commands/modes:
-  1. app        : Launch the Streamlit Web Application (mini/app.py)
+  1. app        : Launch the React Web UI and local Python API
   2. test       : Run End-to-End System Tests (test_unified_system.py)
   3. docs       : Generate Technical Documentation & Proposal PDFs (generate_project_pdf.py)
   4. pipeline   : Run WhatsApp Agentic AI Batch Pipeline (run_pipeline.py)
@@ -27,6 +27,7 @@ Usage examples:
 
 import sys
 import os
+import shutil
 import subprocess
 import argparse
 from pathlib import Path
@@ -35,11 +36,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 # Automatically detect virtual environment Python and executables
 VENV_PYTHON = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
-VENV_STREAMLIT = PROJECT_ROOT / ".venv" / "Scripts" / "streamlit.exe"
-
 # Fallback to current sys.executable if .venv not found
 PYTHON_EXE = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
-STREAMLIT_EXE = str(VENV_STREAMLIT) if VENV_STREAMLIT.exists() else "streamlit"
 
 
 def print_banner():
@@ -49,7 +47,7 @@ def print_banner():
 ==============================================================================
  Project Directory : """ + str(PROJECT_ROOT) + """
  Python Runtime    : """ + PYTHON_EXE + """
- Streamlit Runtime : """ + STREAMLIT_EXE + """
+ React Frontend    : """ + str(PROJECT_ROOT / "frontend") + """
 ==============================================================================
 """
     print(banner)
@@ -123,18 +121,43 @@ def cmd_pipeline(chat_path=None, media_dir=None):
 
 
 def cmd_app(port=8501):
-    """Launches the Streamlit Web Application."""
-    app_path = PROJECT_ROOT / "mini" / "app.py"
-    print(f"\n>>> Starting Streamlit Web Application...")
-    print(f"    Target: {app_path}")
+    """Builds when needed, then launches the React UI and local Python API."""
+    frontend_dir = PROJECT_ROOT / "frontend"
+    dist_index = frontend_dir / "dist" / "index.html"
+    npm_exe = shutil.which("npm.cmd") or shutil.which("npm")
+
+    if not dist_index.exists():
+        if not npm_exe:
+            print("[FAIL] Node.js and npm are required to build the React interface.")
+            return False
+        if not (frontend_dir / "node_modules").exists():
+            installed = run_command(
+                title="Install React frontend dependencies",
+                cmd=[npm_exe, "ci"],
+                cwd=frontend_dir,
+            )
+            if not installed:
+                return False
+        built = run_command(
+            title="Build React frontend",
+            cmd=[npm_exe, "run", "build"],
+            cwd=frontend_dir,
+        )
+        if not built:
+            return False
+
+    server_path = (PROJECT_ROOT / "backend" / "server.py") if (PROJECT_ROOT / "backend" / "server.py").exists() else (PROJECT_ROOT / "mini" / "server.py")
+    print(f"\n>>> Starting React Web Application...")
+    print(f"    Target: {server_path}")
     print(f"    URL:    http://localhost:{port}")
     print("    Press Ctrl+C to stop the web server.\n")
     cmd = [
-        STREAMLIT_EXE, "run", str(app_path),
-        "--server.port", str(port),
-        "--browser.gatherUsageStats", "false"
+        PYTHON_EXE, str(server_path),
+        "--host", "127.0.0.1",
+        "--port", str(port),
+        "--open-browser",
     ]
-    return run_command("Streamlit Web Application", cmd)
+    return run_command("React web application and local Python API", cmd)
 
 
 def cmd_all():
@@ -178,7 +201,7 @@ def interactive_menu():
     print("Available Commands:")
     print("  [1] Run All Verification (System Tests + Docs)")
     print("  [2] Run End-to-End Tests (test_unified_system.py)")
-    print("  [3] Launch Streamlit Web App (mini/app.py)")
+    print("  [3] Launch React Web App and Local API")
     print("  [4] Generate Documentation PDFs (generate_project_pdf.py)")
     print("  [5] Run WhatsApp Pipeline (run_pipeline.py)")
     print("  [6] Retrain / Evaluate Color Model (model_v2/avg/train_color_model.py)")
@@ -221,7 +244,7 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--all", action="store_true", help="Run all automated verification steps (Tests + Docs)")
     group.add_argument("--test", action="store_true", help="Run end-to-end system tests")
-    group.add_argument("--app", action="store_true", help="Launch Streamlit web application")
+    group.add_argument("--app", action="store_true", help="Launch React web application")
     group.add_argument("--docs", action="store_true", help="Generate technical documentation PDFs")
     group.add_argument("--pipeline", action="store_true", help="Run WhatsApp AI classifier pipeline")
     group.add_argument("--train", action="store_true", help="Retrain/evaluate color model")

@@ -4,15 +4,28 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 
+# React frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+backend/dist/
+
 # Virtual environments
 .venv/
 venv/
 env/
 *_env/
 
-# Streamlit secrets (never commit real credentials)
+# Local secrets (never commit real credentials)
 .streamlit/secrets.toml
 mini/.streamlit/secrets.toml
+mini/secrets.toml
+backend/.streamlit/secrets.toml
+backend/secrets.toml
+**/.streamlit/secrets.toml
+**/secrets.toml
+.env
+*.env
 
 # OS / editor
 .DS_Store
@@ -49,5 +62,3 @@ dataset_manifest.csv
 # PDF Generator Code
 generate_*_pdf.py
 generate_project_pdf.py
-
-

@@ -1,4 +1,4 @@
-"""End-to-end check of the deployed colour model exactly as mini/app.py uses it:
+"""End-to-end check of the archived colour model:
 load model_color.joblib, feed real subjects' back+front PIL images + age/sex through
 palm_color.extract_features, run predict_proba. Confirms it works and reports
 training-set agreement (sanity, not generalisation)."""

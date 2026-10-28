@@ -42,7 +42,7 @@ nodes = {
     # Inference (bottom)
     'inference_cli': {'pos': (0.25, -5), 'color': '#00B894', 'label': 'CLI Inference\ninference.py\nCommand-line tool'},
     
-    'inference_web': {'pos': (0.75, -5), 'color': '#00CEC9', 'label': 'Web App\napp.py (Streamlit)\nUpload & Classify'},
+    'inference_web': {'pos': (0.75, -5), 'color': '#00CEC9', 'label': 'React Web App\nLocal Python API\nUpload & Classify'},
     
     # Classification logic
     'classification': {'pos': (0.5, -6.5), 'color': '#FF7675', 'label': 'Dosha Classification\nSingle/Dual/Tri-Dosha\nThreshold: 15%'},
@@ -177,7 +177,7 @@ fig.add_annotation(
         '• Dataset: ~80 samples (3 classes)<br>'
         '• Model: MobileNetV2 (3.5M params)<br>'
         '• Training: Adam, lr=1e-4, batch=16<br>'
-        '• Deployment: CLI + Streamlit Web App'
+        '• Deployment: CLI + React Web App'
     ),
     x=0.5,
     y=-8.8,

@@ -27,16 +27,18 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
-PROJECT_ROOT = Path("c:/Users/hp/Desktop/ayurveda prakriti classifier")
-MINI_DIR = PROJECT_ROOT / "mini"
+BACKEND_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BACKEND_DIR.parent if (BACKEND_DIR.parent / "dataset").exists() else BACKEND_DIR
 WRIST_DIR = PROJECT_ROOT / "dataset" / "Wrist_Dataset"
-MASTER_XLSX = PROJECT_ROOT / "doctor_validation_prakriti_master.xlsx"
+MASTER_XLSX = (PROJECT_ROOT / "doctor_validation_prakriti_master.xlsx") if (PROJECT_ROOT / "doctor_validation_prakriti_master.xlsx").exists() else (BACKEND_DIR / "doctor_validation_prakriti_master.xlsx")
 DATASET_MASTER_XLSX = PROJECT_ROOT / "dataset" / "doctor_validation_prakriti_master.xlsx"
-FEATURE_CACHE_PATH = PROJECT_ROOT / "dataset" / "verified_features_cache.joblib"
-MODEL_PATH = MINI_DIR / "unified_prakriti_pipeline.joblib"
+FEATURE_CACHE_PATH = (PROJECT_ROOT / "dataset" / "verified_features_cache.joblib") if (PROJECT_ROOT / "dataset").exists() else (BACKEND_DIR / "verified_features_cache.joblib")
+MODEL_PATH = (BACKEND_DIR / "unified_prakriti_pipeline.joblib") if (BACKEND_DIR / "unified_prakriti_pipeline.joblib").exists() else (PROJECT_ROOT / "mini" / "unified_prakriti_pipeline.joblib")
 
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(MINI_DIR))
+for path in [BACKEND_DIR, PROJECT_ROOT, PROJECT_ROOT / "mini", PROJECT_ROOT / "backend"]:
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 from unified_cv import extract_participant_features, FEATURE_NAMES, VIEW_KEYS
 from supabasehelper import supabase_client

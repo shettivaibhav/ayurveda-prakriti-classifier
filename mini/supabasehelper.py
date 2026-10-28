@@ -2,49 +2,81 @@
 Supabase helper functions for uploading wrist images and data
 """
 import io
+import os
+from pathlib import Path
+
 from PIL import Image
 from supabase import create_client
 from datetime import datetime
 import hashlib
-import streamlit as st
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 compatibility when TOML config is used.
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError:
+        tomllib = None
 
 
 # Supabase configuration
 SUPABASE_URL = None
 SUPABASE_KEY = None
 supabase_client = None
+_CONFIG = {}
+
+
+def _config_paths():
+    current_dir = Path(__file__).resolve().parent
+    workspace = current_dir.parent
+    candidates = [
+        current_dir / "secrets.toml",
+        current_dir / ".streamlit" / "secrets.toml",  # Read older local config files.
+        workspace / "secrets.toml",
+        workspace / ".streamlit" / "secrets.toml",
+        Path.cwd() / "secrets.toml",
+        Path.cwd() / ".streamlit" / "secrets.toml",
+        Path.cwd() / "mini" / "secrets.toml",
+        Path.cwd() / "mini" / ".streamlit" / "secrets.toml",
+    ]
+    return list(dict.fromkeys(path.resolve() for path in candidates))
+
+
+def _read_config():
+    if tomllib is None:
+        return {}
+    for path in _config_paths():
+        if not path.is_file():
+            continue
+        try:
+            with path.open("rb") as config_file:
+                data = tomllib.load(config_file)
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            continue
+    return {}
+
+
+def _config_value(section, key):
+    section_data = next(
+        (value for name, value in _CONFIG.items() if name.lower() == section.lower() and isinstance(value, dict)),
+        {},
+    )
+    value = next((value for name, value in section_data.items() if name.lower() == key.lower()), None)
+    if value is not None:
+        return value
+    return next((value for name, value in _CONFIG.items() if name.lower() == key.lower()), None)
 
 def _load_secrets():
-    global SUPABASE_URL, SUPABASE_KEY, supabase_client
-    # 1. Try Streamlit secrets
-    try:
-        SUPABASE_URL = st.secrets["supabase"]["url"]
-        SUPABASE_KEY = st.secrets["supabase"]["key"]
-    except Exception:
-        pass
-        
-    # 2. Try parsing secrets.toml file directly
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        try:
-            import tomllib
-            from pathlib import Path
-            current_dir = Path(__file__).resolve().parent
-            toml_paths = [
-                current_dir / ".streamlit" / "secrets.toml",
-                current_dir.parent / ".streamlit" / "secrets.toml",
-                Path.cwd() / ".streamlit" / "secrets.toml",
-                Path.cwd() / "mini" / ".streamlit" / "secrets.toml"
-            ]
-            for path in toml_paths:
-                if path.exists():
-                    with open(path, "rb") as f:
-                        data = tomllib.load(f)
-                        if "supabase" in data:
-                            SUPABASE_URL = data["supabase"].get("url")
-                            SUPABASE_KEY = data["supabase"].get("key")
-                            break
-        except Exception:
-            pass
+    global SUPABASE_URL, SUPABASE_KEY, supabase_client, _CONFIG
+    _CONFIG = _read_config()
+    SUPABASE_URL = os.getenv("SUPABASE_URL") or _config_value("supabase", "url")
+    SUPABASE_KEY = (
+        os.getenv("SUPABASE_KEY")
+        or os.getenv("SUPABASE_ANON_KEY")
+        or _config_value("supabase", "key")
+    )
 
     if SUPABASE_URL and SUPABASE_KEY:
         try:
@@ -55,81 +87,13 @@ def _load_secrets():
 _load_secrets()
 
 def get_gemini_api_key():
-    """Get Gemini API Key from Streamlit secrets or secrets.toml file directly"""
-    # 1. Try from Streamlit secrets
-    try:
-        if "supabase" in st.secrets and "gemini_api_key" in st.secrets["supabase"]:
-            return st.secrets["supabase"]["gemini_api_key"]
-        if "gemini_api_key" in st.secrets:
-            return st.secrets["gemini_api_key"]
-    except Exception:
-        pass
-
-    # 2. Try parsing secrets.toml file directly
-    try:
-        import tomllib
-        from pathlib import Path
-        current_dir = Path(__file__).resolve().parent
-        toml_paths = [
-            current_dir / ".streamlit" / "secrets.toml",
-            current_dir.parent / ".streamlit" / "secrets.toml",
-            Path.cwd() / ".streamlit" / "secrets.toml",
-            Path.cwd() / "mini" / ".streamlit" / "secrets.toml"
-        ]
-        for path in toml_paths:
-            if path.exists():
-                with open(path, "rb") as f:
-                    data = tomllib.load(f)
-                    if "supabase" in data and "gemini_api_key" in data["supabase"]:
-                        return data["supabase"]["gemini_api_key"]
-                    if "gemini_api_key" in data:
-                        return data["gemini_api_key"]
-    except Exception:
-        pass
-    return None
+    """Read the Gemini key from the environment or local TOML configuration."""
+    return os.getenv("GEMINI_API_KEY") or _config_value("supabase", "gemini_api_key")
 
 
 def get_groq_api_key():
-    """Get Groq API Key from Streamlit secrets or secrets.toml file directly"""
-    # 1. Try from Streamlit secrets
-    try:
-        if "supabase" in st.secrets:
-            for k, v in st.secrets["supabase"].items():
-                if k.lower() == "groq_api_key":
-                    return v
-        for k, v in st.secrets.items():
-            if k.lower() == "groq_api_key":
-                return v
-    except Exception:
-        pass
-
-    # 2. Try parsing secrets.toml file directly
-    try:
-        import tomllib
-        from pathlib import Path
-        current_dir = Path(__file__).resolve().parent
-        toml_paths = [
-            current_dir / ".streamlit" / "secrets.toml",
-            current_dir.parent / ".streamlit" / "secrets.toml",
-            Path.cwd() / ".streamlit" / "secrets.toml",
-            Path.cwd() / "mini" / ".streamlit" / "secrets.toml"
-        ]
-        for path in toml_paths:
-            if path.exists():
-                with open(path, "rb") as f:
-                    data = tomllib.load(f)
-                    # Check inside [supabase] table case-insensitively
-                    if "supabase" in data:
-                        for k, v in data["supabase"].items():
-                            if k.lower() == "groq_api_key":
-                                return v
-                    # Check at root level case-insensitively
-                    for k, v in data.items():
-                        if k.lower() == "groq_api_key":
-                            return v
-    except Exception:
-        pass
-    return None
+    """Read the Groq key from the environment or local TOML configuration."""
+    return os.getenv("GROQ_API_KEY") or _config_value("supabase", "groq_api_key")
 
 
 def compress_image(image, max_size_kb=200, quality=85):
@@ -489,7 +453,7 @@ def upload_complete_analysis(user_id, gender, images_dict, probabilities, final_
         "clinical_features": clean_markers,
         "is_doctor_mode": is_doctor_mode,
         "validation_status": "Verified (Doctor-in-the-Loop Mode)" if is_doctor_mode else "Pending Doctor Validation",
-        "source": "Streamlit Frontend Web App"
+        "source": "React Frontend Web App"
     }
     
     # 1. Upload images to Supabase storage if provided

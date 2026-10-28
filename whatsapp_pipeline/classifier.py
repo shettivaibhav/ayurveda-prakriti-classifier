@@ -10,11 +10,13 @@ from pathlib import Path
 
 # Add root folder and mini folder to python path to resolve modules
 import sys
-PROJECT_ROOT = Path("c:/Users/hp/Desktop/ayurveda prakriti classifier")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-if str(PROJECT_ROOT / "mini") not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT / "mini"))
+for sub in ["backend", "mini"]:
+    sub_path = PROJECT_ROOT / sub
+    if sub_path.exists() and str(sub_path) not in sys.path:
+        sys.path.insert(0, str(sub_path))
 
 import joblib
 from PIL import Image

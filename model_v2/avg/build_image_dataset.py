@@ -26,7 +26,7 @@ LABELS_CSV = DATA_DIR / "labels_all.csv"
 OUT_CSV = Path(__file__).resolve().parent / "image_manifest.csv"
 
 LABEL_COL = "Prakriti"
-# canonical view order (matches mini/app.py VIEW_ORDER, minus the "palm_" prefix here)
+# canonical view order (matches mini/classifier_service.py VIEW_ORDER, minus the "palm_" prefix here)
 VIEWS = ["open_front", "open_back", "closed_front", "closed_back"]
 VIEW_FILENAMES = {
     "open_front": "palm_open_front.jpg",

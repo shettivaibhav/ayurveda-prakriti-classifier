@@ -18,7 +18,7 @@ FILES = {"palm_open_front": "palm_open_front.jpg", "palm_open_back": "palm_open_
          "palm_closed_front": "palm_closed_front.jpg", "palm_closed_back": "palm_closed_back.jpg"}
 
 
-class WristClassifier(nn.Module):  # identical to mini/app.py
+class WristClassifier(nn.Module):  # architecture used by the archived checkpoint
     def __init__(self, num_classes, pretrained=False):
         super().__init__()
         self.backbone = models.mobilenet_v2(weights=None)

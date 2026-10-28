@@ -15,8 +15,7 @@ Two "average the 4 views" designs, both under subject-level CV:
 
 Then a final head is trained on all 366 images and assembled with the frozen backbone
 into a single-view WristClassifier saved to mini/model_v2.pth, with
-inference_mode="average_predictions" so mini/app.py runs each uploaded view and
-averages the results.
+inference_mode="average_predictions" for the archived CNN inference workflow.
 """
 
 import argparse
@@ -49,8 +48,7 @@ RNG = 42
 
 # ---- deployable single-view model: FROZEN MobileNetV2 backbone + trainable head ----
 class WristClassifier(nn.Module):
-    """Single-view classifier. Same submodule names (backbone/head) used in mini/app.py
-    so the saved state_dict loads there unchanged."""
+    """Single-view classifier whose backbone/head names match the saved checkpoints."""
 
     def __init__(self, num_classes, pretrained=True):
         super().__init__()
